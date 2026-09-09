@@ -17,6 +17,41 @@
         .player-section { width: 100%; max-width: 950px; margin: 0 auto; padding: 12px; transition: all 0.3s ease; }
         .video-container { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 12px; overflow: hidden; border: 3px solid #1e293b; box-shadow: 0 15px 35px rgba(0,0,0,0.7); position: relative; }
         
+        /* Custom Fake Fullscreen Mode to bypass browser notification banner */
+        .video-container.fake-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+            aspect-ratio: auto !important;
+            z-index: 999999 !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+
+        .fake-fs-exit-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 1000000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .fake-fs-exit-btn:hover { background: rgba(255, 0, 0, 0.8); }
+        .video-container.fake-fullscreen .fake-fs-exit-btn { display: flex; }
+
         body.share-mode .video-container.willow-ios-mode { display: flex !important; align-items: center !important; justify-content: center !important; }
         body.share-mode .video-container.willow-ios-mode iframe { width: 100% !important; height: 100% !important; object-fit: contain !important; }
 
@@ -31,9 +66,12 @@
         .btn-whatsapp-banner svg { width: 16px; height: 16px; fill: #fff; }
         .btn-whatsapp-banner:hover { background: #0ea5e9; }
 
-        .controls { width: 100%; max-width: 950px; margin: 0 auto; padding: 8px 12px; }
-        .btn-copy { width: 100%; padding: 12px; background: #1e293b; border: 1px solid #334155; color: #38bdf8; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+        .controls { width: 100%; max-width: 950px; margin: 0 auto; padding: 8px 12px; display: flex; gap: 10px; }
+        .btn-copy { flex: 1; padding: 12px; background: #1e293b; border: 1px solid #334155; color: #38bdf8; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
         .btn-copy:hover { background: #334155; }
+        
+        .btn-fullscreen { padding: 12px 18px; background: #0284c7; border: 1px solid #0ea5e9; color: #fff; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; white-space: nowrap; }
+        .btn-fullscreen:hover { background: #0ea5e9; }
 
         .channel-list { width: 100%; max-width: 950px; margin: 0 auto; padding: 8px 12px 25px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-height: 40vh; overflow-y: auto; }
         .channel-list::-webkit-scrollbar { width: 6px; }
@@ -76,6 +114,7 @@
     <div class="main-container">
         <div class="player-section">
             <div id="videoContainer" class="video-container">
+                <button class="fake-fs-exit-btn" onclick="toggleCustomFullscreen()" title="Exit Fullscreen">✕</button>
                 <iframe id="player" src="https://tv4wav2.pages.dev?id=E1HD" allow="autoplay; encrypted-media; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms" allowfullscreen="true" webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
             </div>
         </div>
@@ -93,11 +132,12 @@
 
         <div class="controls">
             <button class="btn-copy" onclick="copyLink()">Copy Active Channel Share Link</button>
+            <button class="btn-fullscreen" onclick="toggleCustomFullscreen()">⛶ Fullscreen</button>
         </div>
 
         <div class="share-mode-wa-btn">
             <button class="btn-wa-share-large" onclick="shareToWhatsAppDirect()">
-                <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 11.944.01c3.172.001 6.155 1.233 8.391 3.474 2.236 2.24 3.466 5.227 3.464 8.397-.004 6.548-5.34 11.887-11.885 11.887-2.008-.002-3.98-.51-5.732-1.472L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.747 1.451 5.436 0 9.86-4.413 9.863-9.83.001-2.624-1.023-5.09-2.885-6.951C16.452 1.961 13.991.937 11.439.937-5.438 0-9.863 4.414-9.866 9.831-.001 1.673.456 3.305 1.32 4.743L1.873 21.6l6.302-1.647zM17.13 14.15c-.31-.156-1.833-.905-2.115-1.008-.282-.103-.489-.156-.69.156-.202.312-.781 1.008-.957 1.213-.177.206-.353.23-.663.075-.312-.156-1.316-.486-2.507-1.548-.927-.827-1.553-1.849-1.735-2.16-.182-.312-.02-.48.136-.635.141-.14.312-.363.468-.546.156-.182.208-.312.312-.52.104-.207.052-.39-.026-.546-.078-.156-.69-1.662-.946-2.277-.25-.6-.525-.518-.72-.528l-.615-.01c-.213 0-.56.08-.854.4-.294.32-1.123 1.101-1.123 2.686 0 1.585 1.153 3.118 1.313 3.326.16.207 2.27 3.466 5.497 4.864.768.332 1.367.53 1.834.679.773.245 1.477.21 2.035.127.62-.093 1.833-.75 2.09-1.473.256-.723.256-1.343.18-1.473-.076-.13-.283-.207-.593-.364z"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 11.944.01c3.172.001 6.155 1.233 8.391 3.474 2.236 2.24 3.466 5.227 3.464 8.397-.004 6.548-5.34 11.887-11.885 11.887-2.008-.002-3.98-.51-5.732-1.472L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.747 1.451 5.436 0 9.86-4.413 9.863-9.83.001-2.624-1.023-5.09-2.885-6.951C16.452 1.961 13.991.937 11.439.937c-5.438 0-9.863 4.414-9.866 9.831-.001 1.673.456 3.305 1.32 4.743L1.873 21.6l6.302-1.647zM17.13 14.15c-.31-.156-1.833-.905-2.115-1.008-.282-.103-.489-.156-.69.156-.202.312-.781 1.008-.957 1.213-.177.206-.353.23-.663.075-.312-.156-1.316-.486-2.507-1.548-.927-.827-1.553-1.849-1.735-2.16-.182-.312-.02-.48.136-.635.141-.14.312-.363.468-.546.156-.182.208-.312.312-.52.104-.207.052-.39-.026-.546-.078-.156-.69-1.662-.946-2.277-.25-.6-.525-.518-.72-.528l-.615-.01c-.213 0-.56.08-.854.4-.294.32-1.123 1.101-1.123 2.686 0 1.585 1.153 3.118 1.313 3.326.16.207 2.27 3.466 5.497 4.864.768.332 1.367.53 1.834.679.773.245 1.477.21 2.035.127.62-.093 1.833-.75 2.09-1.473.256-.723.256-1.343.18-1.473-.076-.13-.283-.207-.593-.364z"/></svg>
                 Share Stream to WhatsApp
             </button>
         </div>
@@ -266,6 +306,20 @@
             if(btn) btn.classList.add('active');
         }
 
+        // Custom Fullscreen Toggle to avoid browser text notification banners
+        function toggleCustomFullscreen() {
+            videoContainer.classList.toggle('fake-fullscreen');
+            if (videoContainer.classList.contains('fake-fullscreen')) {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock("landscape").catch(err => console.log("Orientation lock failed"));
+                }
+            } else {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
+            }
+        }
+
         function copyLink() {
             const cleanShareUrl = window.location.origin + window.location.pathname + '?share=' + activeId;
             navigator.clipboard.writeText(cleanShareUrl).then(() => { alert('Link copied: ' + cleanShareUrl); });
@@ -276,22 +330,6 @@
             const shareText = "Watch Live Cricket Match Stream Here: " + cleanShareUrl;
             window.open("https://api.whatsapp.com/send?text=" + encodeURIComponent(shareText), "_blank");
         }
-
-        const lockOrientation = () => {
-            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullscreenElement) {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock("landscape").catch(err => console.log("Orientation lock failed"));
-                }
-            } else {
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
-            }
-        };
-
-        document.addEventListener("fullscreenchange", lockOrientation);
-        document.addEventListener("webkitfullscreenchange", lockOrientation);
-        document.addEventListener("mozfullscreenchange", lockOrientation);
     </script>
 </body>
 </html>
